@@ -68,6 +68,10 @@ public class Screenshotter {
             e.printStackTrace();
         }
 
-        return textureView.getBitmap(width, height);
+        Bitmap screenshot = textureView.getBitmap(width, height);
+        mMediaProjection.stop();
+        virtualDisplay.release();
+
+        return screenshot;
     }
 }
