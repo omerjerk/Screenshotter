@@ -31,12 +31,21 @@ public class Screenshotter {
 
     private TextureView textureView;
 
+    private static Screenshotter mInstance;
+
+    public Screenshotter getInstance() {
+        if (mInstance == null) {
+            mInstance = new Screenshotter();
+        }
+        return mInstance;
+    }
+
     /**
      * Takes the screenshot of whatever currently is on the default display.
      * @param resultCode The result code returned by the request for accessing MediaProjection permission
      * @param data The intent returned by the same request
      */
-    public Bitmap takeScreenshot(Context context, int resultCode, Intent data, int width, int height)
+    private Bitmap takeScreenshot(Context context, int resultCode, Intent data, int width, int height)
             throws IOException{
         MediaProjectionManager mMediaProjectionManager = (MediaProjectionManager)
                 context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
