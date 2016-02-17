@@ -40,12 +40,14 @@ public class Screenshotter {
         return mInstance;
     }
 
+    private Screenshotter() {}
+
     /**
      * Takes the screenshot of whatever currently is on the default display.
      * @param resultCode The result code returned by the request for accessing MediaProjection permission
      * @param data The intent returned by the same request
      */
-    private Bitmap takeScreenshot(Context context, int resultCode, Intent data, int width, int height)
+    public Bitmap takeScreenshot(Context context, int resultCode, Intent data, int width, int height)
             throws IOException{
         MediaProjectionManager mMediaProjectionManager = (MediaProjectionManager)
                 context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -54,8 +56,12 @@ public class Screenshotter {
         this.width = width;
         this.height = height;
 
-        textureView = new TextureView(context);
-        mSurface = new Surface(textureView.getSurfaceTexture());
+        if (textureView == null) {
+            textureView = new TextureView(context);
+        }
+        if (mSurface == null) {
+            mSurface = new Surface(textureView.getSurfaceTexture());
+        }
 
         virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                 width, height, 50,
