@@ -57,7 +57,7 @@ public class Screenshotter {
         textureView = new TextureView(context);
         mSurface = new Surface(textureView.getSurfaceTexture());
 
-        virtualDisplay = mMediaProjection.createVirtualDisplay("Remote Droid",
+        virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                 width, height, 50,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mSurface, null, null);
