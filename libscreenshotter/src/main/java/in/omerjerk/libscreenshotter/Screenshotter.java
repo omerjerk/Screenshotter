@@ -5,9 +5,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.util.Log;
@@ -33,7 +30,7 @@ public class Screenshotter {
 
     private static Screenshotter mInstance;
 
-    public Screenshotter getInstance() {
+    public static Screenshotter getInstance() {
         if (mInstance == null) {
             mInstance = new Screenshotter();
         }
