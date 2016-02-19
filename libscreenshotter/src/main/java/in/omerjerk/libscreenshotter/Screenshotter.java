@@ -50,8 +50,7 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
      * @param resultCode The result code returned by the request for accessing MediaProjection permission
      * @param data The intent returned by the same request
      */
-    public Screenshotter takeScreenshot(Context context, int resultCode, Intent data, ScreenshotCallback cb)
-            throws IOException{
+    public Screenshotter takeScreenshot(Context context, int resultCode, Intent data, ScreenshotCallback cb) {
         this.context = context;
         this.cb = cb;
 

@@ -39,19 +39,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
-            try {
-                Screenshotter.getInstance().setStize(720, 1280)
-                        .takeScreenshot(this, resultCode, data, new ScreenshotCallback() {
-                            @Override
-                            public void onScreenshot(Bitmap bitmap) {
+            Screenshotter.getInstance().setStize(720, 1280)
+                    .takeScreenshot(this, resultCode, data, new ScreenshotCallback() {
+                        @Override
+                        public void onScreenshot(Bitmap bitmap) {
+                            try {
                                 File file = new File(Environment.getExternalStorageDirectory(), "test.jpeg");
                                 FileOutputStream out = new FileOutputStream(file);
-                                bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
-                        });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                        }
+                    });
         } else {
             Toast.makeText(this, "You denied the permission.", Toast.LENGTH_SHORT).show();
         }
