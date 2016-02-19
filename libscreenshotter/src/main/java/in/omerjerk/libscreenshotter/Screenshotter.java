@@ -3,6 +3,7 @@ package in.omerjerk.libscreenshotter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.projection.MediaProjection;
@@ -16,7 +17,7 @@ import java.io.IOException;
 /**
  * Created by omerjerk on 17/2/16.
  */
-public class Screenshotter {
+public class Screenshotter implements TextureView.SurfaceTextureListener {
 
     private static final String TAG = "LibScreenshotter";
 
@@ -26,7 +27,12 @@ public class Screenshotter {
     private int width;
     private int height;
 
+    private Context context;
     private TextureView textureView;
+
+    private int resultCode;
+    private Intent data;
+    private ScreenshotCallback cb;
 
     private static Screenshotter mInstance;
 
@@ -44,21 +50,33 @@ public class Screenshotter {
      * @param resultCode The result code returned by the request for accessing MediaProjection permission
      * @param data The intent returned by the same request
      */
-    public Bitmap takeScreenshot(Context context, int resultCode, Intent data, int width, int height)
+    public Screenshotter takeScreenshot(Context context, int resultCode, Intent data, ScreenshotCallback cb)
             throws IOException{
-        MediaProjectionManager mMediaProjectionManager = (MediaProjectionManager)
-                context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        MediaProjection mMediaProjection = mMediaProjectionManager.getMediaProjection(resultCode, data);
-
-        this.width = width;
-        this.height = height;
+        this.context = context;
+        this.cb = cb;
 
         if (textureView == null) {
             textureView = new TextureView(context);
+            textureView.setSurfaceTextureListener(this);
         }
+        return this;
+    }
+
+    public Screenshotter setStize(int width, int height) {
+        this.width = width;
+        this.height = height;
+        return this;
+    }
+
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         if (mSurface == null) {
             mSurface = new Surface(textureView.getSurfaceTexture());
         }
+
+        MediaProjectionManager mMediaProjectionManager = (MediaProjectionManager)
+                context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        MediaProjection mMediaProjection = mMediaProjectionManager.getMediaProjection(resultCode, data);
 
         virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                 width, height, 50,
@@ -72,9 +90,23 @@ public class Screenshotter {
         }
 
         Bitmap screenshot = textureView.getBitmap(width, height);
+        cb.onScreenshot(screenshot);
         mMediaProjection.stop();
         virtualDisplay.release();
+    }
 
-        return screenshot;
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+
+    }
+
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        return false;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+
     }
 }

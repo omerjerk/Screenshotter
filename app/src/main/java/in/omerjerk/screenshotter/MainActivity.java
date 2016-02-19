@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import in.omerjerk.libscreenshotter.ScreenshotCallback;
 import in.omerjerk.libscreenshotter.Screenshotter;
 
 public class MainActivity extends AppCompatActivity {
@@ -39,10 +40,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             try {
-                Bitmap bmp = Screenshotter.getInstance().takeScreenshot(this, resultCode, data, 720, 1280);
-                File file = new File(Environment.getExternalStorageDirectory(), "test.jpeg");
-                FileOutputStream out = new FileOutputStream(file);
-                bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                Screenshotter.getInstance().setStize(720, 1280)
+                        .takeScreenshot(this, resultCode, data, new ScreenshotCallback() {
+                            @Override
+                            public void onScreenshot(Bitmap bitmap) {
+                                File file = new File(Environment.getExternalStorageDirectory(), "test.jpeg");
+                                FileOutputStream out = new FileOutputStream(file);
+                                bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                            }
+                        });
             } catch (IOException e) {
                 e.printStackTrace();
             }
