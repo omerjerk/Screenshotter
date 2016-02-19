@@ -67,7 +67,6 @@ public class Screenshotter {
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
-
         try {
             EncoderDecoder codec = new EncoderDecoder(width, height);
             mSurface = codec.createDisplaySurface();

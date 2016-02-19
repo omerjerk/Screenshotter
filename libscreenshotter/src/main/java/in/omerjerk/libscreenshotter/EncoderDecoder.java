@@ -40,6 +40,7 @@ public class EncoderDecoder implements Runnable {
         encoder.configure(encoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
 
         Surface surface = encoder.createInputSurface();
+        encoder.start();
 
         initDecoder();
         return surface;
@@ -138,6 +139,7 @@ public class EncoderDecoder implements Runnable {
 //                    Log.d(TAG, "decoded, checking frame " + checkIndex);
                         byte[] b = new byte[info.size];
                         outputFrame.get(b, info.offset, info.size);
+                        Log.e("umair", "raw image byte length = " + info.size);
                     }
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         Log.d(TAG, "output EOS");
