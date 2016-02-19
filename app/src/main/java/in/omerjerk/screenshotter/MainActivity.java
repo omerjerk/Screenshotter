@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
-            Screenshotter.getInstance().setStize(720, 1280)
+            Screenshotter.getInstance().setSize(720, 1280)
                     .takeScreenshot(this, resultCode, data, new ScreenshotCallback() {
                         @Override
                         public void onScreenshot(Bitmap bitmap) {
@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
                                 File file = new File(Environment.getExternalStorageDirectory(), "test.jpeg");
                                 FileOutputStream out = new FileOutputStream(file);
                                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                                Toast.makeText(MainActivity.this, "Screenshot Captured!", Toast.LENGTH_SHORT).show();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }

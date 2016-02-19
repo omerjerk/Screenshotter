@@ -53,6 +53,8 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
     public Screenshotter takeScreenshot(Context context, int resultCode, Intent data, ScreenshotCallback cb) {
         this.context = context;
         this.cb = cb;
+        this.resultCode = resultCode;
+        this.data = data;
 
         if (textureView == null) {
             textureView = new TextureView(context);
@@ -61,7 +63,7 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
         return this;
     }
 
-    public Screenshotter setStize(int width, int height) {
+    public Screenshotter setSize(int width, int height) {
         this.width = width;
         this.height = height;
         return this;
@@ -69,6 +71,7 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        Log.d(TAG, "onSurfaceTextureAvailable width = " + width + " height = " + height);
         if (mSurface == null) {
             mSurface = new Surface(textureView.getSurfaceTexture());
         }
@@ -96,16 +99,17 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+        Log.d(TAG, "onSurfaceTextureSizeChanged");
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        Log.d(TAG, "onSurfaceTextureDestroyed");
         return false;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+        Log.d(TAG, "onSurfaceTextureUpdated");
     }
 }
