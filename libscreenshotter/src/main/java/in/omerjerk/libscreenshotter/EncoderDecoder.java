@@ -22,10 +22,14 @@ public class EncoderDecoder implements Runnable {
 
     private MediaCodec encoder;
     private MediaCodec decoder;
+    private CodecCallback codecCb;
 
-    public EncoderDecoder(int width, int height) {
+    boolean VERBOSE = true;
+
+    public EncoderDecoder(int width, int height, CodecCallback cb) {
         this.width = width;
         this.height = height;
+        this.codecCb = cb;
     }
 
     public Surface createDisplaySurface() throws IOException {
@@ -35,7 +39,7 @@ public class EncoderDecoder implements Runnable {
         encoderFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
         encoderFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         encoderFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-        Log.i(TAG, "Starting encoder");
+        if(VERBOSE) Log.i(TAG, "Starting encoder");
         encoder = MediaCodec.createEncoderByType(MIME_TYPE);
         encoder.configure(encoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
 
@@ -65,11 +69,11 @@ public class EncoderDecoder implements Runnable {
                 int encoderStatus = encoder.dequeueOutputBuffer(info, TIMEOUT_USEC);
                 if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                     // no output available yet
-                    Log.d(TAG, "no output from encoder available");
+                    if (VERBOSE) Log.d(TAG, "no output from encoder available");
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     // not expected for an encoder
                     MediaFormat newFormat = encoder.getOutputFormat();
-                    Log.d(TAG, "encoder output format changed: " + newFormat);
+                    if (VERBOSE) Log.d(TAG, "encoder output format changed: " + newFormat);
                 } else if (encoderStatus < 0) {
                     //fail("unexpected result from encoder.dequeueOutputBuffer: " + encoderStatus);
                 } else { // encoderStatus >= 0
@@ -91,7 +95,7 @@ public class EncoderDecoder implements Runnable {
                         decoder.configure(format, null, null, 0);
                         decoder.start();
                         decoderConfigured = true;
-                        Log.d(TAG, "decoder configured (" + info.size + " bytes)");
+                        if (VERBOSE) Log.d(TAG, "decoder configured (" + info.size + " bytes)");
                     } else {
                         // Get a decoder input buffer, blocking until it's available.
                         //assertTrue(decoderConfigured);
@@ -102,7 +106,7 @@ public class EncoderDecoder implements Runnable {
                         decoder.queueInputBuffer(inputBufIndex, 0, info.size,
                                 info.presentationTimeUs, info.flags);
                         encoderDone = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
-                        Log.d(TAG, "passed " + info.size + " bytes to decoder"
+                        if (VERBOSE) Log.d(TAG, "passed " + info.size + " bytes to decoder"
                                 + (encoderDone ? " (EOS)" : ""));
                     }
                     encoder.releaseOutputBuffer(encoderStatus, false);
@@ -118,7 +122,7 @@ public class EncoderDecoder implements Runnable {
                 int decoderStatus = decoder.dequeueOutputBuffer(info, TIMEOUT_USEC);
                 if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                     // no output available yet
-                    Log.d(TAG, "no output from decoder available");
+                    if (VERBOSE) Log.d(TAG, "no output from decoder available");
                 } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     // this happens before the first frame is returned
 //                decoderOutputFormat = decoder.getOutputFormat();
@@ -132,15 +136,16 @@ public class EncoderDecoder implements Runnable {
                     outputFrame.limit(info.offset + info.size);
 //                rawSize += info.size;
                     if (info.size == 0) {
-                        Log.d(TAG, "got empty frame");
+                        if (VERBOSE) Log.d(TAG, "got empty frame");
                     } else {
 //                    Log.d(TAG, "decoded, checking frame " + checkIndex);
                         byte[] b = new byte[info.size];
                         outputFrame.get(b, info.offset, info.size);
-                        Log.e("umair", "raw image byte length = " + info.size);
+                        if (VERBOSE) Log.e("umair", "raw image byte length = " + info.size);
+                        codecCb.rawFrame(b);
                     }
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                        Log.d(TAG, "output EOS");
+                        if (VERBOSE) Log.d(TAG, "output EOS");
                         outputDone = true;
                     }
                     decoder.releaseOutputBuffer(decoderStatus, false /*render*/);

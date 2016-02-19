@@ -2,25 +2,19 @@ package in.omerjerk.libscreenshotter;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.util.Log;
 import android.view.Surface;
-import android.view.TextureView;
 
 import java.io.IOException;
 
 /**
  * Created by omerjerk on 17/2/16.
  */
-public class Screenshotter {
+public class Screenshotter implements CodecCallback{
 
     private static final String TAG = "LibScreenshotter";
 
@@ -68,7 +62,7 @@ public class Screenshotter {
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
         try {
-            EncoderDecoder codec = new EncoderDecoder(width, height);
+            EncoderDecoder codec = new EncoderDecoder(width, height, this);
             mSurface = codec.createDisplaySurface();
             virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                     width, height, 50,
@@ -86,5 +80,10 @@ public class Screenshotter {
         this.width = width;
         this.height = height;
         return this;
+    }
+
+    @Override
+    public void rawFrame(byte[] b) {
+
     }
 }
