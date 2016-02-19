@@ -90,8 +90,6 @@ public class EncoderDecoder implements Runnable {
                         format.setByteBuffer("csd-0", encodedData);
                         decoder.configure(format, null, null, 0);
                         decoder.start();
-//                    decoderInputBuffers = decoder.getInputBuffers();
-//                    decoderOutputBuffers = decoder.getOutputBuffers();
                         decoderConfigured = true;
                         Log.d(TAG, "decoder configured (" + info.size + " bytes)");
                     } else {
@@ -149,5 +147,9 @@ public class EncoderDecoder implements Runnable {
                 }
             }
         }
+    }
+
+    public void stopCodec() {
+        encoder.signalEndOfInputStream();
     }
 }
