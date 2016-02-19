@@ -154,7 +154,7 @@ public class EncoderDecoder implements Runnable {
         }
     }
 
-    public void stopCodec() {
+    public void stop() {
         encoder.signalEndOfInputStream();
     }
 }

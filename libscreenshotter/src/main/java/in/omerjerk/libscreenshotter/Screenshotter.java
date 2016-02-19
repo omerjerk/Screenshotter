@@ -2,6 +2,8 @@ package in.omerjerk.libscreenshotter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
@@ -33,10 +35,9 @@ public class Screenshotter implements CodecCallback{
     private static Screenshotter mInstance;
 
     private MediaProjection mMediaProjection;
+    private EncoderDecoder codec;
 
-    private static final String MIME_TYPE = "video/avc";
-
-    private MediaCodec encoder;
+    private int frameCount = 0;
 
     public static Screenshotter getInstance() {
         if (mInstance == null) {
@@ -62,7 +63,7 @@ public class Screenshotter implements CodecCallback{
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
         try {
-            EncoderDecoder codec = new EncoderDecoder(width, height, this);
+            codec = new EncoderDecoder(width, height, this);
             mSurface = codec.createDisplaySurface();
             virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                     width, height, 50,
@@ -84,6 +85,22 @@ public class Screenshotter implements CodecCallback{
 
     @Override
     public void rawFrame(byte[] b) {
+        if (frameCount == 3) {
+            Bitmap bmp = createBitmap(b);
+            cb.onScreenshot(bmp);
+            codec.stop();
+        }
+    }
 
+    private Bitmap createBitmap(byte[] data) {
+        int nrOfPixels = data.length / 3; // Three bytes per pixel.
+        int pixels[] = new int[nrOfPixels];
+        for(int i = 0; i < nrOfPixels; i++) {
+            int r = data[3*i];
+            int g = data[3*i + 1];
+            int b = data[3*i + 2];
+            pixels[i] = Color.rgb(r, g, b);
+        }
+        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
     }
 }
