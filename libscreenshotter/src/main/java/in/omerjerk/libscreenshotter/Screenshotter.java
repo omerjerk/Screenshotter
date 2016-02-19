@@ -6,6 +6,9 @@ import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaFormat;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.util.Log;
@@ -17,7 +20,7 @@ import java.io.IOException;
 /**
  * Created by omerjerk on 17/2/16.
  */
-public class Screenshotter implements TextureView.SurfaceTextureListener {
+public class Screenshotter {
 
     private static final String TAG = "LibScreenshotter";
 
@@ -28,13 +31,18 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
     private int height;
 
     private Context context;
-    private TextureView textureView;
 
     private int resultCode;
     private Intent data;
     private ScreenshotCallback cb;
 
     private static Screenshotter mInstance;
+
+    private MediaProjection mMediaProjection;
+
+    private static final String MIME_TYPE = "video/avc";
+
+    private MediaCodec encoder;
 
     public static Screenshotter getInstance() {
         if (mInstance == null) {
@@ -56,10 +64,22 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
         this.resultCode = resultCode;
         this.data = data;
 
-        if (textureView == null) {
-            textureView = new TextureView(context);
-            textureView.setSurfaceTextureListener(this);
+        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
+                .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+
+        try {
+            EncoderDecoder codec = new EncoderDecoder(width, height);
+            mSurface = codec.createDisplaySurface();
+            virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
+                    width, height, 50,
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                    mSurface, null, null);
+            codec.run();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
         return this;
     }
 
@@ -67,49 +87,5 @@ public class Screenshotter implements TextureView.SurfaceTextureListener {
         this.width = width;
         this.height = height;
         return this;
-    }
-
-    @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        Log.d(TAG, "onSurfaceTextureAvailable width = " + width + " height = " + height);
-        if (mSurface == null) {
-            mSurface = new Surface(textureView.getSurfaceTexture());
-        }
-
-        MediaProjectionManager mMediaProjectionManager = (MediaProjectionManager)
-                context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        MediaProjection mMediaProjection = mMediaProjectionManager.getMediaProjection(resultCode, data);
-
-        virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
-                width, height, 50,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                mSurface, null, null);
-
-        try {
-            Thread.sleep(1000); //Let's wait for 1 sec for the virtual display to start properly
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        Bitmap screenshot = textureView.getBitmap(width, height);
-        cb.onScreenshot(screenshot);
-        mMediaProjection.stop();
-        virtualDisplay.release();
-    }
-
-    @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        Log.d(TAG, "onSurfaceTextureSizeChanged");
-    }
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        Log.d(TAG, "onSurfaceTextureDestroyed");
-        return false;
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-        Log.d(TAG, "onSurfaceTextureUpdated");
     }
 }
