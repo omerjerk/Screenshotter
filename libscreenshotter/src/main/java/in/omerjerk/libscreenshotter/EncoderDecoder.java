@@ -24,12 +24,16 @@ public class EncoderDecoder implements Runnable {
     private MediaCodec decoder;
     private CodecCallback codecCb;
 
+    private CodecOutputSurface outputSurface;
+
     boolean VERBOSE = true;
 
     public EncoderDecoder(int width, int height, CodecCallback cb) {
         this.width = width;
         this.height = height;
         this.codecCb = cb;
+
+        outputSurface = new CodecOutputSurface(width, height);
     }
 
     public Surface createDisplaySurface() throws IOException {
@@ -92,7 +96,7 @@ public class EncoderDecoder implements Runnable {
                         MediaFormat format =
                                 MediaFormat.createVideoFormat(MIME_TYPE, width, height);
                         format.setByteBuffer("csd-0", encodedData);
-                        decoder.configure(format, null, null, 0);
+                        decoder.configure(format, outputSurface.getSurface(), null, 0);
                         decoder.start();
                         decoderConfigured = true;
                         if (VERBOSE) Log.d(TAG, "decoder configured (" + info.size + " bytes)");
@@ -131,24 +135,15 @@ public class EncoderDecoder implements Runnable {
                 } else if (decoderStatus < 0) {
                     //TODO: fail
                 } else {  // decoderStatus >= 0
-                    ByteBuffer outputFrame = decoder.getOutputBuffer(decoderStatus);
-                    outputFrame.position(info.offset);
-                    outputFrame.limit(info.offset + info.size);
-//                rawSize += info.size;
-                    if (info.size == 0) {
+                    boolean doRender = info.size != 0;
+                    if (!doRender) {
                         if (VERBOSE) Log.d(TAG, "got empty frame");
-                    } else {
-//                    Log.d(TAG, "decoded, checking frame " + checkIndex);
-                        byte[] b = new byte[info.size];
-                        outputFrame.get(b, info.offset, info.size);
-                        if (VERBOSE) Log.e("umair", "raw image byte length = " + info.size);
-                        codecCb.rawFrame(b);
                     }
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         if (VERBOSE) Log.d(TAG, "output EOS");
                         outputDone = true;
                     }
-                    decoder.releaseOutputBuffer(decoderStatus, false /*render*/);
+                    decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
                 }
             }
         }
