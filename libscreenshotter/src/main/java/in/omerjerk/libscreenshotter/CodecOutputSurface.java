@@ -251,7 +251,7 @@ public class CodecOutputSurface
     /**
      * Saves the current frame to disk as a PNG image.
      */
-    public void saveFrame(String filename) throws IOException {
+    public Bitmap getBitmap() throws IOException {
         // glReadPixels gives us a ByteBuffer filled with what is essentially big-endian RGBA
         // data (i.e. a byte of red, followed by a byte of green...).  To use the Bitmap
         // constructor that takes an int[] array with pixel data, we need an int[] filled
@@ -288,19 +288,17 @@ public class CodecOutputSurface
         GLES20.glReadPixels(0, 0, mWidth, mHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,
                 mPixelBuf);
 
-        BufferedOutputStream bos = null;
+//        BufferedOutputStream bos = null;
         try {
-            bos = new BufferedOutputStream(new FileOutputStream(filename));
+//            bos = new BufferedOutputStream(new FileOutputStream(filename));
             Bitmap bmp = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
             mPixelBuf.rewind();
             bmp.copyPixelsFromBuffer(mPixelBuf);
-            bmp.compress(Bitmap.CompressFormat.PNG, 90, bos);
-            bmp.recycle();
+            return bmp;
+//            bmp.compress(Bitmap.CompressFormat.PNG, 90, bos);
+//            bmp.recycle();
         } finally {
-            if (bos != null) bos.close();
-        }
-        if (VERBOSE) {
-            Log.d(TAG, "Saved " + mWidth + "x" + mHeight + " frame as '" + filename + "'");
+//            if (bos != null) bos.close();
         }
     }
 
