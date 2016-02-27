@@ -3,12 +3,13 @@ package in.omerjerk.libscreenshotter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.media.MediaCodec;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.io.IOException;
 /**
  * Created by omerjerk on 17/2/16.
  */
-public class Screenshotter implements CodecCallback{
+public class Screenshotter implements CodecCallback {
 
     private static final String TAG = "LibScreenshotter";
 
@@ -69,6 +70,7 @@ public class Screenshotter implements CodecCallback{
                     width, height, 50,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                     mSurface, null, null);
+            frameCount = 0;
             codec.run();
         } catch (IOException e) {
             e.printStackTrace();
@@ -84,12 +86,9 @@ public class Screenshotter implements CodecCallback{
     }
 
     @Override
-    public void rawFrame(byte[] b) {
-        if (frameCount == 3) {
-            Bitmap bmp = createBitmap(b);
-            cb.onScreenshot(bmp);
-            codec.stop();
-        }
+    public void onBitmap(Bitmap b) {
+        cb.onScreenshot(b);
+        codec.stop();
     }
 
     private Bitmap createBitmap(byte[] data) {
