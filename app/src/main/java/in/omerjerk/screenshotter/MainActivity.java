@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -31,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
+    private static final String TAG = "ScreenshotterExample";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,11 +52,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
-            Screenshotter.getInstance().setSize(720, 1280)
+            Screenshotter.getInstance()
+                    .setSize(720, 1280)
                     .takeScreenshot(this, resultCode, data, new ScreenshotCallback() {
                         @Override
                         public void onScreenshot(Bitmap bitmap) {
                             try {
+                                Log.d(TAG, "onScreenshot called");
                                 verifyStoragePermissions(MainActivity.this);
                                 File file = new File(Environment.getExternalStorageDirectory(), "test.jpeg");
                                 FileOutputStream out = new FileOutputStream(file);

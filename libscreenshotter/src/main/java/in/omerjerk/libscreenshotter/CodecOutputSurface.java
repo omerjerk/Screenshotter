@@ -52,6 +52,8 @@ public class CodecOutputSurface
 
     private ByteBuffer mPixelBuf;                       // used by saveFrame()
 
+    private CodecCallback cb;
+
     /**
      * Creates a CodecOutputSurface backed by a pbuffer with the specified dimensions.  The
      * new EGL context and surface will be made current.  Creates a Surface that can be passed
@@ -67,6 +69,10 @@ public class CodecOutputSurface
         eglSetup();
         makeCurrent();
         setup();
+    }
+
+    public void setBitmapCallback(CodecCallback cb) {
+        this.cb = cb;
     }
 
     /**
@@ -201,8 +207,8 @@ public class CodecOutputSurface
      * with the EGLContext that contains the GL texture object used by SurfaceTexture.)
      */
     public void awaitNewImage() {
-        final int TIMEOUT_MS = 2500;
-
+        final int TIMEOUT_MS = 5500;
+/*
         synchronized (mFrameSyncObject) {
             while (!mFrameAvailable) {
                 try {
@@ -223,7 +229,8 @@ public class CodecOutputSurface
 
         // Latch the data.
         mTextureRender.checkGlError("before updateTexImage");
-        mSurfaceTexture.updateTexImage();
+        */
+
     }
 
     /**
@@ -239,6 +246,21 @@ public class CodecOutputSurface
     @Override
     public void onFrameAvailable(SurfaceTexture st) {
         if (VERBOSE) Log.d(TAG, "new frame available");
+        if (mSurfaceTexture == null) {
+            Log.e(TAG, "onFrameAvailable called even after releasing the texture");
+            //The surface texture has been released
+            return;
+        }
+        mSurfaceTexture.updateTexImage();
+        drawImage(false);
+        if (cb != null) {
+            try {
+                cb.onBitmap(getBitmap());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        /*
         synchronized (mFrameSyncObject) {
             if (mFrameAvailable) {
                 throw new RuntimeException("mFrameAvailable already set, frame could be dropped");
@@ -246,6 +268,7 @@ public class CodecOutputSurface
             mFrameAvailable = true;
             mFrameSyncObject.notifyAll();
         }
+        */
     }
 
     /**

@@ -3,16 +3,12 @@ package in.omerjerk.libscreenshotter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.util.Log;
 import android.view.Surface;
-
-import java.io.IOException;
 
 /**
  * Created by omerjerk on 17/2/16.
@@ -35,10 +31,8 @@ public class Screenshotter implements CodecCallback {
 
     private static Screenshotter mInstance;
 
-    private MediaProjection mMediaProjection;
-    private EncoderDecoder codec;
-
-    private int frameCount = 0;
+    private CodecOutputSurface outputSurface;
+    int frameCount = 0;
 
     public static Screenshotter getInstance() {
         if (mInstance == null) {
@@ -54,25 +48,24 @@ public class Screenshotter implements CodecCallback {
      * @param resultCode The result code returned by the request for accessing MediaProjection permission
      * @param data The intent returned by the same request
      */
-    public Screenshotter takeScreenshot(Context context, int resultCode, Intent data, ScreenshotCallback cb) {
+    public Screenshotter takeScreenshot(Context context, int resultCode, Intent data, final ScreenshotCallback cb) {
         this.context = context;
         this.cb = cb;
         this.resultCode = resultCode;
         this.data = data;
+        this.frameCount = 0;
 
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+        MediaProjection mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
         try {
-            codec = new EncoderDecoder(width, height, this);
-            mSurface = codec.createDisplaySurface();
+            outputSurface = new CodecOutputSurface(width, height);
             virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                     width, height, 50,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    mSurface, null, null);
-            frameCount = 0;
-            codec.run();
-        } catch (IOException e) {
+                    outputSurface.getSurface(), null, null);
+            outputSurface.setBitmapCallback(this);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -87,8 +80,12 @@ public class Screenshotter implements CodecCallback {
 
     @Override
     public void onBitmap(Bitmap b) {
-        cb.onScreenshot(b);
-        codec.stop();
+        if (frameCount == 5) {
+            virtualDisplay.release();
+            outputSurface.release();
+            cb.onScreenshot(b);
+        }
+        ++frameCount;
     }
 
     private Bitmap createBitmap(byte[] data) {
