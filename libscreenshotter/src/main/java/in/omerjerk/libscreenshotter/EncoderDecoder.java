@@ -136,14 +136,17 @@ public class EncoderDecoder implements Runnable {
                     //TODO: fail
                 } else {  // decoderStatus >= 0
                     boolean doRender = info.size != 0;
-                    if (!doRender) {
-                        if (VERBOSE) Log.d(TAG, "got empty frame");
-                    }
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         if (VERBOSE) Log.d(TAG, "output EOS");
                         outputDone = true;
                     }
                     decoder.releaseOutputBuffer(decoderStatus, doRender /*render*/);
+                    if (doRender) {
+                        outputSurface.awaitNewImage();
+                        outputSurface.drawImage(true);
+                    } else {
+                        if (VERBOSE) Log.d(TAG, "got empty frame");
+                    }
                 }
             }
         }
