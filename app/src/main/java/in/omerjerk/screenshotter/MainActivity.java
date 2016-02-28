@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -34,10 +35,14 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "ScreenshotterExample";
 
+    private ImageView demoImageView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        demoImageView = (ImageView) findViewById(R.id.output_view);
     }
 
     public void takeScreenshot(View v) {
@@ -57,16 +62,10 @@ public class MainActivity extends AppCompatActivity {
                     .takeScreenshot(this, resultCode, data, new ScreenshotCallback() {
                         @Override
                         public void onScreenshot(Bitmap bitmap) {
-                            try {
-                                Log.d(TAG, "onScreenshot called");
-                                verifyStoragePermissions(MainActivity.this);
-                                File file = new File(Environment.getExternalStorageDirectory(), "test.jpeg");
-                                FileOutputStream out = new FileOutputStream(file);
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                                Toast.makeText(MainActivity.this, "Screenshot Captured!", Toast.LENGTH_SHORT).show();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            Log.d(TAG, "onScreenshot called");
+                            verifyStoragePermissions(MainActivity.this);
+                            demoImageView.setImageBitmap(bitmap);
+                            Toast.makeText(MainActivity.this, "Screenshot Captured!", Toast.LENGTH_SHORT).show();
                         }
                     });
         } else {

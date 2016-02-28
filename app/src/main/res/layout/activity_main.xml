@@ -9,17 +9,18 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="in.omerjerk.screenshotter.MainActivity">
 
-    <RelativeLayout
+    <Button
+        android:id="@+id/button_take_screenshot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true" >
+        android:text="Take Screenshot"
+        android:layout_alignParentTop="true"
+        android:onClick="takeScreenshot"/>
 
-        <Button
-            android:id="@+id/button_take_screenshot"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Take Screenshot"
-            android:onClick="takeScreenshot"/>
-    </RelativeLayout>
+    <ImageView
+        android:id="@+id/output_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/button_take_screenshot"
+        android:layout_alignParentBottom="true" />
 </RelativeLayout>
