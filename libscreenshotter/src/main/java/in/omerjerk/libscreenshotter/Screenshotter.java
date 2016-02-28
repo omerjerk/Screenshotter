@@ -10,6 +10,8 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.view.Surface;
 
+import java.io.IOException;
+
 /**
  * Created by omerjerk on 17/2/16.
  */
@@ -79,11 +81,16 @@ public class Screenshotter implements CodecCallback {
     }
 
     @Override
-    public void onBitmap(Bitmap b) {
+    public void onFrameAvailable() {
         if (frameCount == 5) {
-            virtualDisplay.release();
-            outputSurface.release();
-            cb.onScreenshot(b);
+            try {
+                cb.onScreenshot(outputSurface.getBitmap());
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                virtualDisplay.release();
+                outputSurface.release();
+            }
         }
         ++frameCount;
     }

@@ -254,11 +254,7 @@ public class CodecOutputSurface
         mSurfaceTexture.updateTexImage();
         drawImage(false);
         if (cb != null) {
-            try {
-                cb.onBitmap(getBitmap());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            cb.onFrameAvailable();
         }
         /*
         synchronized (mFrameSyncObject) {
@@ -313,13 +309,17 @@ public class CodecOutputSurface
 
 //        BufferedOutputStream bos = null;
         try {
-//            bos = new BufferedOutputStream(new FileOutputStream(filename));
+            int screenshotSize = mWidth * mHeight;
             Bitmap bmp = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
             mPixelBuf.rewind();
-            bmp.copyPixelsFromBuffer(mPixelBuf);
+            int pixelsBuffer[] = new int[screenshotSize];
+            mPixelBuf.asIntBuffer().get(pixelsBuffer);
+            for (int i = 0; i < screenshotSize; ++i) {
+                // The alpha and green channels' positions are preserved while the red and blue are swapped
+                pixelsBuffer[i] = ((pixelsBuffer[i] & 0xff00ff00)) | ((pixelsBuffer[i] & 0x000000ff) << 16) | ((pixelsBuffer[i] & 0x00ff0000) >> 16);
+            }
+            bmp.setPixels(pixelsBuffer, screenshotSize - mWidth, -mWidth, 0, 0, mWidth, mHeight);
             return bmp;
-//            bmp.compress(Bitmap.CompressFormat.PNG, 90, bos);
-//            bmp.recycle();
         } finally {
 //            if (bos != null) bos.close();
         }
