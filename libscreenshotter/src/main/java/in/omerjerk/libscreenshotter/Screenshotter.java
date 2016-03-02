@@ -3,24 +3,26 @@ package in.omerjerk.libscreenshotter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.media.Image;
+import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.util.Log;
 import android.view.Surface;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Created by omerjerk on 17/2/16.
  */
-public class Screenshotter implements CodecCallback {
+public class Screenshotter implements ImageReader.OnImageAvailableListener {
 
     private static final String TAG = "LibScreenshotter";
 
     private VirtualDisplay virtualDisplay;
-    private Surface mSurface;
 
     private int width;
     private int height;
@@ -33,7 +35,7 @@ public class Screenshotter implements CodecCallback {
 
     private static Screenshotter mInstance;
 
-    private CodecOutputSurface outputSurface;
+    private ImageReader mImageReader;
     int frameCount = 0;
 
     public static Screenshotter getInstance() {
@@ -57,16 +59,16 @@ public class Screenshotter implements CodecCallback {
         this.data = data;
         this.frameCount = 0;
 
+        mImageReader = ImageReader.newInstance(width, height, ImageFormat.RGB_565, 2);
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         MediaProjection mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
         try {
-            outputSurface = new CodecOutputSurface(width, height);
             virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                     width, height, 50,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    outputSurface.getSurface(), null, null);
-            outputSurface.setBitmapCallback(this);
+                    mImageReader.getSurface(), null, null);
+            mImageReader.setOnImageAvailableListener(Screenshotter.this, null);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -81,29 +83,25 @@ public class Screenshotter implements CodecCallback {
     }
 
     @Override
-    public void onFrameAvailable() {
+    public void onImageAvailable(ImageReader reader) {
+        Log.d(TAG, "onImageAvailable");
         if (frameCount == 5) {
-            try {
-                cb.onScreenshot(outputSurface.getBitmap());
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                virtualDisplay.release();
-                outputSurface.release();
-            }
-        }
-        ++frameCount;
-    }
 
-    private Bitmap createBitmap(byte[] data) {
-        int nrOfPixels = data.length / 3; // Three bytes per pixel.
-        int pixels[] = new int[nrOfPixels];
-        for(int i = 0; i < nrOfPixels; i++) {
-            int r = data[3*i];
-            int g = data[3*i + 1];
-            int b = data[3*i + 2];
-            pixels[i] = Color.rgb(r, g, b);
         }
-        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+        Image image = reader.acquireLatestImage();
+        final Image.Plane[] planes = image.getPlanes();
+        final ByteBuffer buffer = planes[0].getBuffer();
+        int offset = 0;
+        int pixelStride = planes[0].getPixelStride();
+        int rowStride = planes[0].getRowStride();
+        int rowPadding = rowStride - pixelStride * width;
+        // create bitmap
+        Bitmap bitmap = Bitmap.createBitmap(width+rowPadding/pixelStride, height, Bitmap.Config.RGB_565);
+        bitmap.copyPixelsFromBuffer(buffer);
+        cb.onScreenshot(bitmap);
+        virtualDisplay.release();
+        image.close();
+        mImageReader = null;
+        ++frameCount;
     }
 }
