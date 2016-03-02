@@ -36,8 +36,11 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
     private static Screenshotter mInstance;
 
     private ImageReader mImageReader;
-    int frameCount = 0;
 
+    /**
+     * Get the single instance of the Screenshotter class.
+     * @return the instance
+     */
     public static Screenshotter getInstance() {
         if (mInstance == null) {
             mInstance = new Screenshotter();
@@ -57,7 +60,6 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         this.cb = cb;
         this.resultCode = resultCode;
         this.data = data;
-        this.frameCount = 0;
 
         mImageReader = ImageReader.newInstance(width, height, ImageFormat.RGB_565, 2);
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
@@ -76,6 +78,12 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         return this;
     }
 
+    /**
+     * Set the size of the screenshot to be taken
+     * @param width width of the requested bitmap
+     * @param height height of the request bitmap
+     * @return the singleton instance
+     */
     public Screenshotter setSize(int width, int height) {
         this.width = width;
         this.height = height;
@@ -84,10 +92,6 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(ImageReader reader) {
-        Log.d(TAG, "onImageAvailable");
-        if (frameCount == 5) {
-
-        }
         Image image = reader.acquireLatestImage();
         final Image.Plane[] planes = image.getPlanes();
         final ByteBuffer buffer = planes[0].getBuffer();
@@ -102,6 +106,5 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         virtualDisplay.release();
         image.close();
         mImageReader = null;
-        ++frameCount;
     }
 }
