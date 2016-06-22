@@ -36,6 +36,7 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
     private static Screenshotter mInstance;
 
     private ImageReader mImageReader;
+    private MediaProjection mMediaProjection;
 
     /**
      * Get the single instance of the Screenshotter class.
@@ -64,7 +65,10 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         mImageReader = ImageReader.newInstance(width, height, ImageFormat.RGB_565, 2);
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        MediaProjection mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+
+        if (mMediaProjection == null) {
+            mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+        }
         try {
             virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
                     width, height, 50,
@@ -95,7 +99,6 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         Image image = reader.acquireLatestImage();
         final Image.Plane[] planes = image.getPlanes();
         final ByteBuffer buffer = planes[0].getBuffer();
-        int offset = 0;
         int pixelStride = planes[0].getPixelStride();
         int rowStride = planes[0].getRowStride();
         int rowPadding = rowStride - pixelStride * width;
