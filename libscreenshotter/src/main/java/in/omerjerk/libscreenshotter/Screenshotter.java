@@ -37,6 +37,7 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
 
     private ImageReader mImageReader;
     private MediaProjection mMediaProjection;
+    private volatile boolean imageAvailable = false;
 
     /**
      * Get the single instance of the Screenshotter class.
@@ -62,12 +63,16 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         this.resultCode = resultCode;
         this.data = data;
 
+        imageAvailable = false;
         mImageReader = ImageReader.newInstance(width, height, ImageFormat.RGB_565, 2);
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
         if (mMediaProjection == null) {
-            mMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+            mMediaProjection = mediaProjectionManager.getMediaProjection(this.resultCode, this.data);
+            if (mMediaProjection == null) {
+                Log.e(TAG, "MediaProjection null. Cannot take the screenshot.");
+            }
         }
         try {
             virtualDisplay = mMediaProjection.createVirtualDisplay("Screenshotter",
@@ -96,6 +101,10 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(ImageReader reader) {
+        synchronized (this) {
+            if (imageAvailable) return;
+            imageAvailable = true;
+        }
         Image image = reader.acquireLatestImage();
         final Image.Plane[] planes = image.getPlanes();
         final ByteBuffer buffer = planes[0].getBuffer();
@@ -105,9 +114,16 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         // create bitmap
         Bitmap bitmap = Bitmap.createBitmap(width+rowPadding/pixelStride, height, Bitmap.Config.RGB_565);
         bitmap.copyPixelsFromBuffer(buffer);
-        cb.onScreenshot(bitmap);
-        virtualDisplay.release();
+        tearDown();
         image.close();
+
+        cb.onScreenshot(bitmap);
+    }
+
+    private void tearDown() {
+        virtualDisplay.release();
+        mMediaProjection.stop();
+        mMediaProjection = null;
         mImageReader = null;
     }
 }
