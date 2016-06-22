@@ -37,7 +37,7 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
 
     private ImageReader mImageReader;
     private MediaProjection mMediaProjection;
-    private volatile boolean imageAvailable = false;
+    private volatile int imageAvailable = 0;
 
     /**
      * Get the single instance of the Screenshotter class.
@@ -63,7 +63,7 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
         this.resultCode = resultCode;
         this.data = data;
 
-        imageAvailable = false;
+        imageAvailable = 0;
         mImageReader = ImageReader.newInstance(width, height, ImageFormat.RGB_565, 2);
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) context
                 .getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -102,8 +102,11 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
     @Override
     public void onImageAvailable(ImageReader reader) {
         synchronized (this) {
-            if (imageAvailable) return;
-            imageAvailable = true;
+            ++imageAvailable;
+            if (imageAvailable != 5) {
+                reader.acquireLatestImage().close();
+                return;
+            }
         }
         Image image = reader.acquireLatestImage();
         final Image.Plane[] planes = image.getPlanes();
