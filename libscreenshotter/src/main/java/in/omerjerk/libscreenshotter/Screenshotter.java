@@ -103,7 +103,7 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
     public void onImageAvailable(ImageReader reader) {
         synchronized (this) {
             ++imageAvailable;
-            if (imageAvailable != 5) {
+            if (imageAvailable != 2) {
                 reader.acquireLatestImage().close();
                 return;
             }
