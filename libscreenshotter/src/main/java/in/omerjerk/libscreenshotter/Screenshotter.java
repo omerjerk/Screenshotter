@@ -101,21 +101,25 @@ public class Screenshotter implements ImageReader.OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(ImageReader reader) {
+        Image image;
         synchronized (this) {
             ++imageAvailable;
             if (imageAvailable != 2) {
-                reader.acquireLatestImage().close();
+                image = reader.acquireLatestImage();
+                if (image == null) return;
+                image.close();
                 return;
             }
         }
-        Image image = reader.acquireLatestImage();
+        image = reader.acquireLatestImage();
+        if (image == null) return;
         final Image.Plane[] planes = image.getPlanes();
-        final ByteBuffer buffer = planes[0].getBuffer();
+        final Buffer buffer = planes[0].getBuffer().rewind();
         int pixelStride = planes[0].getPixelStride();
         int rowStride = planes[0].getRowStride();
         int rowPadding = rowStride - pixelStride * width;
         // create bitmap
-        Bitmap bitmap = Bitmap.createBitmap(width+rowPadding/pixelStride, height, Bitmap.Config.RGB_565);
+        Bitmap bitmap = Bitmap.createBitmap(width+rowPadding/pixelStride, height, Bitmap.Config.ARGB_8888);
         bitmap.copyPixelsFromBuffer(buffer);
         tearDown();
         image.close();
